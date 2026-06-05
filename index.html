@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-accent="indigo">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Voyagora — From idea to itinerary in minutes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+
+<!-- React + Babel from CDN (no build step) -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<style>
+/* ============================================================
+   Theme tokens
+   ============================================================ */
+:root {
+  --font: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+
+  /* accent: indigo (default) */
+  --accent-1: #4f46e5;
+  --accent-2: #2563eb;
+  --accent-soft: rgba(79, 70, 229, 0.12);
+
+  /* light surfaces */
+  --bg: #f6f7fb;
+  --bg-grad-1: #eef1ff;
+  --bg-grad-2: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #f4f5fa;
+  --surface-3: #eceefa;
+  --border: #e6e8f0;
+  --border-strong: #d6d9e6;
+  --text: #131523;
+  --text-soft: #4c5066;
+  --text-faint: #818699;
+  --shadow-sm: 0 1px 2px rgba(20, 22, 40, 0.05), 0 4px 14px rgba(20, 22, 40, 0.05);
+  --shadow-md: 0 6px 28px rgba(20, 22, 40, 0.10);
+  --shadow-lg: 0 18px 50px rgba(20, 22, 40, 0.16);
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.10);
+  --ok: #0e9f6e;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --radius-pill: 999px;
+}
+
+[data-accent="teal"] {
+  --accent-1: #0d9488;
+  --accent-2: #0ea5a4;
+  --accent-soft: rgba(13, 148, 136, 0.12);
+}
+[data-accent="sky"] {
+  --accent-1: #0284c7;
+  --accent-2: #0ea5e9;
+  --accent-soft: rgba(2, 132, 199, 0.12);
+}
+
+[data-theme="dark"] {
+  --bg: #0b0d16;
+  --bg-grad-1: #121529;
+  --bg-grad-2: #0b0d16;
+  --surface: #161a2b;
+  --surface-2: #1c2138;
+  --surface-3: #232843;
+  --border: #2a3050;
+  --border-strong: #353c61;
+  --text: #f2f3f8;
+  --text-soft: #b6bbd0;
+  --text-faint: #828aa6;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 20px 55px rgba(0, 0, 0, 0.55);
+  --danger-soft: rgba(248, 113, 113, 0.14);
+  --accent-soft: rgba(255, 255, 255, 0.07);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background:
+    radial-gradient(1200px 600px at 80% -10%, var(--bg-grad-1), transparent 60%),
+    var(--bg-grad-2);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+a { color: inherit; }
+button { font-family: inherit; cursor: pointer; }
+::selection { background: var(--accent-soft); }
+
+/* ============================================================
+   Layout helpers
+   ============================================================ */
+.container { width: 100%; max-width: 1160px; margin: 0 auto; padding: 0 22px; }
+.gradient-text {
+  background: linear-gradient(100deg, var(--accent-1), var(--accent-2));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Header */
+.header {
+  position: sticky; top: 0; z-index: 50;
+  backdrop-filter: saturate(180%) blur(12px);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  border-bottom: 1px solid var(--border);
+}
+.header-inner { display: flex; align-items: center; justify-content: space-between; height: 66px; }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 19px; letter-spacing: -0.02em; }
+.logo .mark {
+  width: 34px; height: 34px; border-radius: 11px;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  display: grid; place-items: center; color: #fff; box-shadow: var(--shadow-sm);
+}
+.header-actions { display: flex; align-items: center; gap: 10px; }
+
+/* Buttons */
+.btn {
+  border: none; border-radius: var(--radius-pill);
+  padding: 11px 20px; font-weight: 700; font-size: 14.5px;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: transform .12s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+}
+.btn:active { transform: translateY(1px); }
+.btn-primary {
+  color: #fff;
+  background: linear-gradient(100deg, var(--accent-1), var(--accent-2));
+  box-shadow: 0 6px 18px var(--accent-soft);
+}
+.btn-primary:hover { box-shadow: 0 10px 26px var(--accent-soft); transform: translateY(-1px); }
+.btn-ghost {
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+}
+.btn-ghost:hover { border-color: var(--border-strong); }
+.btn-soft {
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-soft:hover { background: var(--surface-3); }
+.icon-btn {
+  width: 42px; height: 42px; border-radius: 12px;
+  display: grid; place-items: center;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); box-shadow: var(--shadow-sm);
+}
+.icon-btn:hover { border-color: var(--border-strong); }
+
+/* ============================================================
+   Hero
+   ============================================================ */
+.hero { padding: 70px 0 30px; position: relative; overflow: hidden; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--accent-soft); color: var(--accent-1);
+  font-weight: 700; font-size: 13px; padding: 7px 14px; border-radius: var(--radius-pill);
+  margin-bottom: 22px;
+}
+[data-theme="dark"] .hero-badge { color: var(--text); }
+.hero h1 {
+  font-size: clamp(34px, 6vw, 60px); line-height: 1.04; letter-spacing: -0.035em;
+  font-weight: 800; margin: 0 0 18px; max-width: 14ch;
+}
+.hero p.lead {
+  font-size: clamp(16px, 2.2vw, 20px); color: var(--text-soft);
+  max-width: 56ch; margin: 0 0 30px;
+}
+.hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+.hero-orb {
+  position: absolute; border-radius: 50%; filter: blur(40px); opacity: .5; z-index: -1;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+}
+.orb-a { width: 320px; height: 320px; top: -90px; right: -60px; opacity: .28; }
+.orb-b { width: 240px; height: 240px; bottom: -120px; left: -80px; opacity: .20; }
+
+/* feature / how rows */
+.section-eyebrow { font-weight: 800; letter-spacing: .12em; text-transform: uppercase; font-size: 12px; color: var(--accent-1); }
+.section-title { font-size: clamp(24px, 3.4vw, 34px); font-weight: 800; letter-spacing: -0.03em; margin: 8px 0 6px; }
+.section-sub { color: var(--text-soft); max-width: 60ch; margin: 0 0 26px; }
+
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow-sm);
+}
+.feature-icon {
+  width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent-1); margin-bottom: 14px;
+}
+[data-theme="dark"] .feature-icon { color: var(--text); }
+.feature-card h3 { margin: 0 0 6px; font-size: 17px; letter-spacing: -0.01em; }
+.feature-card p { margin: 0; color: var(--text-soft); font-size: 14.5px; }
+
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; counter-reset: step; }
+.step { position: relative; padding-left: 4px; }
+.step .num {
+  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 800; color: #fff;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  margin-bottom: 12px; box-shadow: var(--shadow-sm);
+}
+.step h4 { margin: 0 0 5px; font-size: 16px; }
+.step p { margin: 0; color: var(--text-soft); font-size: 14px; }
+
+.section { padding: 36px 0; }
+
+/* ============================================================
+   Planner form
+   ============================================================ */
+.planner-wrap { padding: 14px 0 60px; }
+.planner {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 26px; box-shadow: var(--shadow-md); padding: 30px;
+}
+.planner-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+.planner-head h2 { margin: 0 0 4px; font-size: 26px; letter-spacing: -0.03em; }
+.planner-head p { margin: 0; color: var(--text-soft); }
+
+.field { margin-bottom: 22px; }
+.field-label { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; margin-bottom: 9px; }
+.field-label .req { color: var(--accent-1); }
+.field-hint { font-weight: 500; color: var(--text-faint); font-size: 12.5px; }
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+
+.input, .textarea, .date {
+  width: 100%; padding: 13px 15px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  font-size: 15px; font-family: inherit; transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.input::placeholder, .textarea::placeholder { color: var(--text-faint); }
+.input:focus, .textarea:focus, .date:focus {
+  outline: none; border-color: var(--accent-1);
+  box-shadow: 0 0 0 4px var(--accent-soft); background: var(--surface);
+}
+.textarea { resize: vertical; min-height: 84px; }
+.input-icon-wrap { position: relative; }
+.input-icon-wrap .lead-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-faint); pointer-events: none; }
+.input-icon-wrap .input { padding-left: 42px; }
+.date { color-scheme: light; }
+[data-theme="dark"] .date { color-scheme: dark; }
+
+.field.invalid .input, .field.invalid .textarea, .field.invalid .date,
+.field.invalid .seg-group, .field.invalid .chips { box-shadow: 0 0 0 3px var(--danger-soft); border-radius: var(--radius-sm); }
+.err-msg { color: var(--danger); font-size: 13px; font-weight: 600; margin-top: 7px; display: flex; gap: 6px; align-items: center; }
+
+/* stepper */
+.stepper { display: inline-flex; align-items: center; gap: 0; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
+.stepper button { width: 46px; height: 46px; border: none; background: transparent; color: var(--text); font-size: 20px; font-weight: 700; display: grid; place-items: center; }
+.stepper button:hover { background: var(--surface-3); }
+.stepper .val { min-width: 56px; text-align: center; font-weight: 800; font-size: 17px; }
+
+/* segmented */
+.seg-group { display: flex; flex-wrap: wrap; gap: 10px; }
+.seg {
+  flex: 1 1 auto; min-width: 110px;
+  border: 1px solid var(--border); background: var(--surface-2);
+  border-radius: 14px; padding: 12px 14px; text-align: left;
+  transition: all .14s ease; color: var(--text);
+}
+.seg:hover { border-color: var(--border-strong); }
+.seg .seg-main { font-weight: 700; font-size: 14.5px; display: block; }
+.seg .seg-sub { font-size: 12px; color: var(--text-faint); }
+.seg.active {
+  border-color: transparent; color: #fff;
+  background: linear-gradient(100deg, var(--accent-1), var(--accent-2));
+  box-shadow: 0 6px 16px var(--accent-soft);
+}
+.seg.active .seg-sub { color: rgba(255,255,255,.82); }
+
+/* chips */
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip {
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  border-radius: var(--radius-pill); padding: 9px 16px; font-weight: 650; font-size: 14px;
+  display: inline-flex; align-items: center; gap: 7px; transition: all .14s ease;
+}
+.chip:hover { border-color: var(--border-strong); }
+.chip.active {
+  border-color: transparent; color: #fff;
+  background: linear-gradient(100deg, var(--accent-1), var(--accent-2));
+  box-shadow: 0 5px 14px var(--accent-soft);
+}
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-1); }
+.chip.active .dot { background: #fff; }
+
+.form-footer { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 8px; padding-top: 22px; border-top: 1px solid var(--border); }
+.form-footer .spacer { flex: 1; }
+.form-footer .submit { padding: 14px 30px; font-size: 16px; }
+
+/* ============================================================
+   Loading
+   ============================================================ */
+.loading-screen {
+  position: fixed; inset: 0; z-index: 100;
+  display: grid; place-items: center; text-align: center;
+  background:
+    radial-gradient(900px 500px at 50% 0%, var(--bg-grad-1), transparent 60%),
+    var(--bg-grad-2);
+}
+.loading-card { max-width: 460px; padding: 30px; }
+.spinner { width: 64px; height: 64px; margin: 0 auto 26px; position: relative; }
+.spinner::before, .spinner::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  border: 4px solid transparent;
+}
+.spinner::before { border-top-color: var(--accent-1); border-right-color: var(--accent-2); animation: spin 0.9s linear infinite; }
+.spinner::after { inset: 9px; border-top-color: var(--accent-2); opacity: .5; animation: spin 1.4s linear infinite reverse; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-card h2 { font-size: 24px; margin: 0 0 8px; letter-spacing: -0.02em; }
+.loading-status { color: var(--text-soft); font-size: 16px; min-height: 24px; }
+.loading-dots span { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-1); margin: 0 3px; animation: bounce 1s infinite; }
+.loading-dots span:nth-child(2){ animation-delay: .15s; } .loading-dots span:nth-child(3){ animation-delay: .3s; }
+@keyframes bounce { 0%,80%,100%{ transform: translateY(0); opacity:.5;} 40%{ transform: translateY(-7px); opacity:1;} }
+.loading-dots { margin-top: 18px; }
+
+/* ============================================================
+   Itinerary
+   ============================================================ */
+.itin-header {
+  border-radius: 26px; padding: 34px; color: #fff; margin: 24px 0 26px;
+  background: linear-gradient(120deg, var(--accent-1), var(--accent-2));
+  box-shadow: var(--shadow-lg); position: relative; overflow: hidden;
+}
+.itin-header::after {
+  content:""; position:absolute; width: 360px; height: 360px; border-radius:50%;
+  background: rgba(255,255,255,.12); top:-160px; right:-80px;
+}
+.itin-header .kicker { font-weight: 700; opacity: .9; font-size: 14px; display:flex; gap:8px; align-items:center; }
+.itin-header h1 { margin: 8px 0 8px; font-size: clamp(26px, 4.4vw, 40px); letter-spacing: -0.035em; }
+.itin-meta { display: flex; flex-wrap: wrap; gap: 18px; margin: 12px 0 16px; font-weight: 600; }
+.itin-meta .m { display: inline-flex; gap: 8px; align-items: center; opacity: .95; }
+.itin-summary { max-width: 70ch; opacity: .96; font-size: 16px; margin: 4px 0 16px; }
+.pref-badges { display: flex; flex-wrap: wrap; gap: 9px; }
+.pref-badge { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.25); padding: 6px 13px; border-radius: var(--radius-pill); font-weight: 650; font-size: 13.5px; }
+
+.itin-grid { display: grid; grid-template-columns: 1fr 330px; gap: 24px; align-items: start; }
+.weather-side { position: sticky; top: 82px; display: flex; flex-direction: column; gap: 16px; }
+.side-title { font-weight: 800; font-size: 14px; letter-spacing: .04em; text-transform: uppercase; color: var(--text-faint); margin: 2px 4px; }
+
+/* day card */
+.day-card { margin-bottom: 24px; }
+.day-head { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; flex-wrap: wrap; }
+.day-num {
+  width: 44px; height: 44px; border-radius: 13px; flex: none;
+  display: grid; place-items: center; font-weight: 800; color: #fff; font-size: 17px;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+}
+.day-head h3 { margin: 0; font-size: 20px; letter-spacing: -0.02em; }
+.day-date { background: var(--surface-3); color: var(--text-soft); font-weight: 700; font-size: 13px; padding: 5px 12px; border-radius: var(--radius-pill); }
+.day-weather-line { color: var(--text-soft); font-weight: 600; font-size: 14px; margin: 6px 0 18px; display: flex; gap: 8px; align-items:center; }
+
+.daypart { margin-bottom: 18px; }
+.daypart-label { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 13px; letter-spacing: .05em; text-transform: uppercase; color: var(--accent-1); margin-bottom: 10px; }
+[data-theme="dark"] .daypart-label { color: var(--text); }
+
+.activity {
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 15px 16px; background: var(--surface-2); margin-bottom: 10px;
+  transition: border-color .15s, transform .12s, box-shadow .15s;
+}
+.activity:hover { border-color: var(--border-strong); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.activity-top { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; flex-wrap: wrap; }
+.activity-time { font-weight: 800; font-size: 14px; color: var(--accent-1); min-width: 48px; }
+[data-theme="dark"] .activity-time { color: var(--text); }
+.activity-title { font-weight: 750; font-size: 16px; flex: 1; min-width: 140px; }
+.io-badge { font-size: 11.5px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; padding: 4px 9px; border-radius: var(--radius-pill); }
+.io-Indoor { background: rgba(37,99,235,.14); color: #2563eb; }
+.io-Outdoor { background: rgba(14,159,110,.14); color: #0e9f6e; }
+.io-Covered { background: rgba(217,119,6,.16); color: #d97706; }
+.io-Mixed { background: rgba(139,92,246,.16); color: #8b5cf6; }
+.activity-desc { color: var(--text-soft); font-size: 14.5px; margin: 4px 0 8px; }
+.activity-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 13px; color: var(--text-faint); }
+.activity-meta .why { color: var(--text-soft); font-style: italic; }
+.activity-meta .cost { font-weight: 700; color: var(--text-soft); }
+.map-link {
+  display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 13px;
+  color: var(--accent-1); text-decoration: none; padding: 4px 10px; border-radius: var(--radius-pill);
+  border: 1px solid var(--border); background: var(--surface);
+}
+.map-link:hover { border-color: var(--accent-1); }
+
+.eat-list { display: flex; flex-direction: column; gap: 10px; }
+.restaurant { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1px solid var(--border); background: var(--surface-2); border-radius: var(--radius-sm); padding: 13px 15px; flex-wrap: wrap; }
+.restaurant .r-name { font-weight: 750; font-size: 15px; }
+.restaurant .r-meta { font-size: 13px; color: var(--text-faint); }
+.r-match { font-size: 12px; font-weight: 800; color: var(--ok); background: rgba(14,159,110,.12); padding: 4px 10px; border-radius: var(--radius-pill); }
+
+.callout { display: flex; gap: 12px; padding: 14px 16px; border-radius: var(--radius-sm); background: var(--accent-soft); border: 1px dashed var(--border-strong); margin-top: 14px; }
+.callout .ct-title { font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+.callout p { margin: 0; color: var(--text-soft); font-size: 14.5px; }
+
+.day-footer { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.foot-chip { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13px; color: var(--text-soft); background: var(--surface-2); border: 1px solid var(--border); padding: 7px 13px; border-radius: var(--radius-pill); }
+
+.subhead { font-weight: 800; font-size: 15px; margin: 18px 0 10px; display:flex; gap:8px; align-items:center; }
+
+/* weather card */
+.weather-card { padding: 18px; }
+.weather-card .wc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.weather-card .wc-day { font-weight: 800; font-size: 14px; }
+.weather-card .wc-date { font-size: 12.5px; color: var(--text-faint); }
+.weather-card .wc-temp { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+.weather-icon { width: 42px; height: 42px; color: var(--accent-1); }
+[data-theme="dark"] .weather-icon { color: var(--text); }
+.wc-cond { font-weight: 700; margin: 10px 0 2px; }
+.wc-stats { display: flex; gap: 14px; flex-wrap: wrap; margin: 8px 0; font-size: 13px; color: var(--text-soft); }
+.wc-stats .s { display: inline-flex; gap: 6px; align-items: center; }
+.wc-advice { font-size: 13px; color: var(--text-soft); border-top: 1px solid var(--border); margin-top: 10px; padding-top: 10px; }
+
+/* markdown (raw text fallback) */
+.md { font-size: 15.5px; color: var(--text); }
+.md-h { margin: 20px 0 8px; font-size: 19px; letter-spacing: -0.02em; }
+.md-h:first-child { margin-top: 4px; }
+.md h4.md-h { font-size: 16px; color: var(--accent-1); }
+[data-theme="dark"] .md h4.md-h { color: var(--text); }
+.md-p { margin: 8px 0; color: var(--text-soft); }
+.md-ul { margin: 8px 0; padding-left: 22px; }
+.md-ul li { margin: 4px 0; color: var(--text-soft); }
+.md-hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+.info-banner {
+  display: flex; gap: 12px; padding: 14px 18px; border-radius: var(--radius-sm);
+  background: var(--accent-soft); border: 1px solid var(--border-strong);
+  color: var(--text); margin-bottom: 18px; align-items: flex-start; font-size: 14px;
+}
+.info-banner .b-icon { color: var(--accent-1); flex: none; }
+[data-theme="dark"] .info-banner .b-icon { color: var(--text); }
+
+/* error banner */
+.banner {
+  display: flex; gap: 12px; padding: 16px 18px; border-radius: var(--radius-sm);
+  background: var(--danger-soft); border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+  color: var(--text); margin-bottom: 18px; align-items: flex-start;
+}
+.banner .b-icon { color: var(--danger); flex: none; }
+.banner h4 { margin: 0 0 4px; font-size: 15px; }
+.banner p { margin: 0; font-size: 14px; color: var(--text-soft); }
+
+/* footer */
+.footer { border-top: 1px solid var(--border); margin-top: 30px; padding: 34px 0; }
+.footer-inner { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.footer .tagline { color: var(--text-soft); max-width: 36ch; margin: 10px 0 0; }
+.footer-links { display: flex; gap: 22px; flex-wrap: wrap; align-items: center; }
+.footer-links a { color: var(--text-soft); text-decoration: none; font-weight: 600; font-size: 14px; }
+.footer-links a:hover { color: var(--text); }
+
+/* accent picker */
+.accent-picker { display: inline-flex; gap: 6px; align-items: center; }
+.accent-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; }
+.accent-swatch.active { border-color: var(--text); transform: scale(1.08); }
+.sw-indigo { background: linear-gradient(135deg,#4f46e5,#2563eb); }
+.sw-teal { background: linear-gradient(135deg,#0d9488,#0ea5a4); }
+.sw-sky { background: linear-gradient(135deg,#0284c7,#0ea5e9); }
+
+/* animations */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeUp .5s cubic-bezier(.2,.7,.3,1) both; }
+.stagger > * { animation: fadeUp .5s cubic-bezier(.2,.7,.3,1) both; }
+.stagger > *:nth-child(1){animation-delay:.04s} .stagger > *:nth-child(2){animation-delay:.10s}
+.stagger > *:nth-child(3){animation-delay:.16s} .stagger > *:nth-child(4){animation-delay:.22s}
+.stagger > *:nth-child(5){animation-delay:.28s} .stagger > *:nth-child(6){animation-delay:.34s}
+
+/* responsive */
+@media (max-width: 920px) {
+  .itin-grid { grid-template-columns: 1fr; }
+  .weather-side { position: static; flex-direction: column; }
+  .grid-3, .steps { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .row, .row-3 { grid-template-columns: 1fr; }
+  .planner { padding: 20px; border-radius: 20px; }
+  .hero { padding: 44px 0 18px; }
+  .header-actions .label-hide { display: none; }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo } = React;
+
+/* ============================================================
+   CONFIG — change the webhook here
+   ============================================================ */
+const WEBHOOK_URL = "https://zeeshansaeed777.app.n8n.cloud/webhook/4ba21abf-25a1-48cd-bf30-07b299673352";
+const ENABLE_OPEN_METEO_FALLBACK = true; // non-blocking weather enrichment
+
+/* ============================================================
+   Icons (inline SVG line icons)
+   ============================================================ */
+const Ic = {
+  pin:    (p)=> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>,
+  cal:    (p)=> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>,
+  users:  (p)=> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11"/></svg>,
+  sun:    (p)=> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>,
+  moon:   (p)=> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>,
+  rain:   (p)=> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M16 13a5 5 0 1 0-9.9-1A4 4 0 0 0 6 20h11a4 4 0 0 0 .9-7.9"/><path d="M8 19v2M12 19v3M16 19v2"/></svg>,
+  cloud:  (p)=> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.7 1.5A4 4 0 0 0 6 19h11.5Z"/></svg>,
+  partly: (p)=> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3v1M5.2 5.2l.7.7M3 12h1M18.4 6.6a4 4 0 0 0-6.9 2.4"/><path d="M16.5 19a4 4 0 0 0 0-8 5 5 0 0 0-9.6 1.3A3.5 3.5 0 0 0 7 19h9.5Z"/></svg>,
+  wind:   (p)=> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 8h11a3 3 0 1 0-3-3M3 16h15a3 3 0 1 1-3 3M3 12h9"/></svg>,
+  drop:   (p)=> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 22a7 7 0 0 0 7-7c0-5-7-13-7-13S5 10 5 15a7 7 0 0 0 7 7Z"/></svg>,
+  spark:  (p)=> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>,
+  route:  (p)=> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M9 19h6a3 3 0 0 0 3-3V8M6 16V8a3 3 0 0 1 3-3h0"/></svg>,
+  bolt:   (p)=> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>,
+  shield: (p)=> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>,
+  fork:   (p)=> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 2v7a3 3 0 0 0 6 0V2M6 9v13M18 2c-2 0-3 2-3 5s1 5 3 5v10"/></svg>,
+  wallet: (p)=> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="2" y="6" width="20" height="14" rx="3"/><path d="M16 13h2M2 9h20"/></svg>,
+  walk:   (p)=> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="13" cy="4" r="2"/><path d="M11 21l1-6 3 2 1 4M12 15l-2-4 1-4 3 3 2 1M9 21l1.5-4"/></svg>,
+  alert:  (p)=> <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>,
+  arrow:  (p)=> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 12h14M13 6l6 6-6 6"/></svg>,
+  ext:    (p)=> <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M15 3h6v6M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>,
+};
+const weatherIcon = (key) => {
+  const map = { rain: Ic.rain, sun: Ic.sun, cloud: Ic.cloud, partly: Ic.partly, wind: Ic.wind };
+  return (map[key] || Ic.partly);
+};
+
+/* ============================================================
+   Form option definitions
+   ============================================================ */
+const TRAVELER_TYPES = [
+  { v:"Solo", sub:"Just me" }, { v:"Couple", sub:"Two of us" },
+  { v:"Family", sub:"With kids" }, { v:"Business", sub:"Work trip" },
+  { v:"Friends", sub:"Group getaway" },
+];
+const BUDGETS = [
+  { v:"Low", sub:"Budget-friendly" }, { v:"Moderate", sub:"Balanced spend" }, { v:"Premium", sub:"Treat ourselves" },
+];
+const PACES = [
+  { v:"Relaxed", sub:"Slow & easy" }, { v:"Balanced", sub:"A bit of both" }, { v:"Packed", sub:"See it all" },
+];
+const INTERESTS = ["Culture","Nature","Food","Shopping","Museums","Adventure","Historical places","Kids-friendly","Photography"];
+const FOOD_PREFS = ["No preference","Vegetarian","Vegan","Halal","Kosher"];
+const MOBILITY = ["Walking-friendly","Low walking","Public transport friendly","Car-friendly"];
+
+const DEMO = {
+  destination: "Copenhagen, Denmark",
+  startDate: "2026-06-13",
+  endDate: "2026-06-14",
+  travelers: 4,
+  travelerType: "Family",
+  budget: "Moderate",
+  pace: "Balanced",
+  interests: ["Culture","Museums","Food"],
+  foodPreference: "Halal",
+  mobilityPreference: "Walking-friendly",
+  specialNotes: "Travelling with two kids, prefer indoor if it rains.",
+};
+
+const blankForm = () => ({
+  destination:"", startDate:"", endDate:"", travelers:2,
+  travelerType:"Couple", budget:"Moderate", pace:"Balanced",
+  interests:[], foodPreference:"No preference",
+  mobilityPreference:"Walking-friendly", specialNotes:"",
+});
+
+/* ============================================================
+   API LAYER — never rejects, always resolves to a valid itinerary
+   ============================================================ */
+function defActivity(a = {}) {
+  return {
+    time: a.time || "",
+    title: a.title || "Activity",
+    description: a.description || "",
+    location: a.location || "",
+    indoorOutdoor: ["Indoor","Outdoor","Covered","Mixed"].includes(a.indoorOutdoor) ? a.indoorOutdoor : "Mixed",
+    estimatedCost: a.estimatedCost || "",
+    whyRecommended: a.whyRecommended || "",
+    mapUrl: a.mapUrl || "#",
+  };
+}
+function defRestaurant(r = {}) {
+  return {
+    name: r.name || "Local spot",
+    cuisine: r.cuisine || "",
+    foodPreferenceMatch: r.foodPreferenceMatch || "",
+    location: r.location || "",
+    estimatedCost: r.estimatedCost || "",
+    mapUrl: r.mapUrl || "#",
+  };
+}
+function defWeather(w = {}) {
+  return {
+    condition: w.condition || "Mild conditions",
+    icon: ["rain","sun","cloud","partly","wind"].includes(w.icon) ? w.icon : "partly",
+    temperature: (typeof w.temperature === "number") ? w.temperature : (parseInt(w.temperature) || null),
+    rainProbability: (typeof w.rainProbability === "number") ? w.rainProbability : (parseInt(w.rainProbability) || 0),
+    wind: w.wind || "Light winds",
+    travelAdvice: w.travelAdvice || "",
+  };
+}
+function defDay(d = {}, i = 0) {
+  const arr = (x) => Array.isArray(x) ? x.map(defActivity) : [];
+  return {
+    dayNumber: d.dayNumber || (i + 1),
+    date: d.date || "",
+    theme: d.theme || ("Day " + (d.dayNumber || (i + 1))),
+    weatherSummary: d.weatherSummary || "",
+    weather: defWeather(d.weather),
+    morning: arr(d.morning),
+    afternoon: arr(d.afternoon),
+    evening: arr(d.evening),
+    restaurants: Array.isArray(d.restaurants) ? d.restaurants.map(defRestaurant) : [],
+    backupPlan: d.backupPlan || "",
+    estimatedBudget: d.estimatedBudget || "",
+    walkingLevel: d.walkingLevel || "",
+  };
+}
+function normalizeItinerary(raw, req) {
+  const days = Array.isArray(raw.days) ? raw.days.map(defDay) : [];
+  return {
+    destination: raw.destination || (req && req.destination) || "Your trip",
+    title: raw.title || ("Trip to " + (raw.destination || (req && req.destination) || "your destination")),
+    summary: raw.summary || "",
+    dates: raw.dates || "",
+    origin: raw.origin || "",
+    preferences: Array.isArray(raw.preferences) ? raw.preferences : [],
+    days: days.length ? days : [defDay({ theme: "Itinerary", morning: [] }, 0)],
+  };
+}
+
+// Deeply unwrap common n8n / model response shapes to find an object with `days`.
+function extractItinerary(input, depth = 0) {
+  if (depth > 8 || input == null) return null;
+
+  // Strings: try fenced JSON, then plain JSON, else give up
+  if (typeof input === "string") {
+    const s = input.trim();
+    if (!s) return null;
+    const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (fence) {
+      const inner = extractFromString(fence[1]);
+      if (inner) { const f = extractItinerary(inner, depth + 1); if (f) return f; }
+    }
+    const parsed = extractFromString(s);
+    if (parsed) return extractItinerary(parsed, depth + 1);
+    return null;
+  }
+
+  if (Array.isArray(input)) {
+    for (const el of input) { const f = extractItinerary(el, depth + 1); if (f) return f; }
+    return null;
+  }
+
+  if (typeof input === "object") {
+    if (Array.isArray(input.days)) return input;             // found it
+    if (input.json !== undefined) { const f = extractItinerary(input.json, depth + 1); if (f) return f; }
+    // chat-completion shape
+    if (input.choices && input.choices[0] && input.choices[0].message) {
+      const f = extractItinerary(input.choices[0].message.content, depth + 1); if (f) return f;
+    }
+    const keys = ["output","itinerary","text","content","message","response","answer","result","data"];
+    for (const k of keys) {
+      if (input[k] !== undefined) { const f = extractItinerary(input[k], depth + 1); if (f) return f; }
+    }
+    // last resort: scan all object values
+    for (const k of Object.keys(input)) {
+      const v = input[k];
+      if (v && typeof v === "object") { const f = extractItinerary(v, depth + 1); if (f) return f; }
+    }
+  }
+  return null;
+}
+function extractFromString(s) {
+  try { return JSON.parse(s); } catch (e) {}
+  // try to slice out the first {...} or [...] block
+  const start = s.search(/[\[{]/);
+  if (start >= 0) {
+    const last = Math.max(s.lastIndexOf("}"), s.lastIndexOf("]"));
+    if (last > start) {
+      try { return JSON.parse(s.slice(start, last + 1)); } catch (e) {}
+    }
+  }
+  return null;
+}
+
+// Dig out the longest human-readable text blob from any response shape,
+// so prose answers can still be shown nicely instead of an error.
+function findRawText(input, depth = 0) {
+  if (depth > 8 || input == null) return "";
+  if (typeof input === "string") return input.trim();
+  if (Array.isArray(input)) {
+    let best = "";
+    for (const el of input) { const t = findRawText(el, depth + 1); if (t.length > best.length) best = t; }
+    return best;
+  }
+  if (typeof input === "object") {
+    if (typeof input.text === "string" && input.text.trim().length > 40) return input.text.trim();
+    let best = "";
+    const keys = ["output","content","message","response","answer","result","data","text","choices","output_text"];
+    for (const k of keys) { if (input[k] !== undefined) { const t = findRawText(input[k], depth + 1); if (t.length > best.length) best = t; } }
+    for (const k of Object.keys(input)) { const v = input[k]; if (v && typeof v === "object") { const t = findRawText(v, depth + 1); if (t.length > best.length) best = t; } }
+    return best;
+  }
+  return "";
+}
+function rawTextItinerary(req, text) {
+  return {
+    destination: (req && req.destination) || "Your trip",
+    title: (req && req.destination) ? ("Your " + req.destination.split(",")[0].trim() + " itinerary") : "Your itinerary",
+    summary: "",
+    dates: req ? friendlyRange(req.startDate, req.endDate) : "",
+    origin: "",
+    preferences: [],
+    __raw: text,
+    days: [],
+  };
+}
+
+function fallbackItinerary(req, headline, detail) {
+  return {
+    destination: (req && req.destination) || "Your trip",
+    title: "We hit a snag building your itinerary",
+    summary: detail,
+    dates: req ? friendlyRange(req.startDate, req.endDate) : "",
+    origin: "",
+    preferences: [],
+    __error: true,
+    days: [ defDay({
+      dayNumber: 1,
+      theme: headline,
+      weatherSummary: "",
+      weather: { condition: "Unavailable", icon: "cloud", temperature: null, rainProbability: 0, wind: "", travelAdvice: "" },
+      morning: [{
+        time: "",
+        title: "What happened",
+        description: detail,
+        indoorOutdoor: "Mixed",
+        whyRecommended: "Fix the issue above, then press “Plan My Trip” again.",
+        mapUrl: "#",
+      }],
+      backupPlan: "Use “Load demo trip” to preview the experience with sample data while you sort out the connection.",
+    }, 0) ],
+  };
+}
+
+async function planTrip(req) {
+  let res;
+  try {
+    res = await fetch(WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req),
+    });
+  } catch (e) {
+    return fallbackItinerary(req, "Couldn’t reach the planner",
+      "Network request failed (\"" + (e && e.message ? e.message : "Failed to fetch") + "\"). " +
+      "Make sure the n8n workflow is Active/published — the Production webhook URL only responds when the workflow is published, and the Test URL fires only once. " +
+      "Also confirm the Webhook node’s CORS / Allowed Origins permits this page (use \"*\" for local file:// testing).");
+  }
+
+  if (!res.ok) {
+    let body = "";
+    try { body = await res.text(); } catch (e) {}
+    return fallbackItinerary(req, "The planner returned an error",
+      "The webhook responded with HTTP " + res.status + " " + (res.statusText || "") + ". " +
+      (body ? "Details: " + body.slice(0, 240) : "Check the n8n execution log for what failed."));
+  }
+
+  let text = "";
+  try { text = await res.text(); } catch (e) {
+    return fallbackItinerary(req, "Empty response", "The webhook returned a response that couldn’t be read.");
+  }
+
+  let payload = null;
+  try { payload = JSON.parse(text); } catch (e) { payload = text; } // may be plain text
+
+  const found = extractItinerary(payload);
+  if (!found) {
+    // No structured itinerary — but if the model returned readable prose, show it nicely.
+    const raw = findRawText(payload) || (typeof payload === "string" ? payload : "");
+    if (raw && raw.length > 60) return rawTextItinerary(req, raw);
+    return fallbackItinerary(req, "Unexpected response shape",
+      "The planner replied, but we couldn’t find an itinerary with a \"days\" array inside it. " +
+      "Make sure the \"Message a model\" node returns ONLY the itinerary JSON (see the system prompt), and that \"Respond to Webhook\" passes it through. " +
+      "Raw preview: " + String(text).slice(0, 200));
+  }
+
+  const itin = normalizeItinerary(found, req);
+
+  // Optional, non-blocking weather enrichment
+  if (ENABLE_OPEN_METEO_FALLBACK) {
+    const missingWeather = itin.days.some(d => d.weather.temperature == null);
+    if (missingWeather) {
+      try { await enrichWeather(itin, req); } catch (e) { /* non-blocking */ }
+    }
+  }
+  return itin;
+}
+
+/* Open-Meteo (free, keyless) weather enrichment */
+async function enrichWeather(itin, req) {
+  const place = (req && req.destination ? req.destination : itin.destination).split(",")[0].trim();
+  if (!place) return;
+  const geoRes = await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&name=" + encodeURIComponent(place));
+  if (!geoRes.ok) return;
+  const geo = await geoRes.json();
+  if (!geo.results || !geo.results[0]) return;
+  const { latitude, longitude } = geo.results[0];
+  const start = req && req.startDate, end = req && req.endDate;
+  if (!start || !end) return;
+  const url = "https://api.open-meteo.com/v1/forecast?latitude=" + latitude + "&longitude=" + longitude +
+    "&daily=temperature_2m_max,precipitation_probability_max,weathercode,windspeed_10m_max" +
+    "&timezone=auto&start_date=" + start + "&end_date=" + end;
+  const fRes = await fetch(url);
+  if (!fRes.ok) return;
+  const f = await fRes.json();
+  const daily = f.daily;
+  if (!daily || !daily.time) return;
+  itin.days.forEach((d, i) => {
+    if (i >= daily.time.length) return;
+    if (d.weather.temperature == null && daily.temperature_2m_max[i] != null)
+      d.weather.temperature = Math.round(daily.temperature_2m_max[i]);
+    if (daily.precipitation_probability_max && daily.precipitation_probability_max[i] != null && !d.weather.rainProbability)
+      d.weather.rainProbability = daily.precipitation_probability_max[i];
+    if (daily.windspeed_10m_max && daily.windspeed_10m_max[i] != null && (!d.weather.wind || d.weather.wind === "Light winds"))
+      d.weather.wind = "Up to " + Math.round(daily.windspeed_10m_max[i]) + " km/h";
+    const code = daily.weathercode ? daily.weathercode[i] : null;
+    if (code != null) d.weather.icon = wmoToIcon(code, d.weather.icon);
+  });
+}
+function wmoToIcon(code, fallback) {
+  if ([51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(code)) return "rain";
+  if ([0,1].includes(code)) return "sun";
+  if ([2].includes(code)) return "partly";
+  if ([3,45,48].includes(code)) return "cloud";
+  return fallback || "partly";
+}
+
+/* ============================================================
+   Date helpers
+   ============================================================ */
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+function parseDate(s){ if(!s) return null; const p=s.split("-"); if(p.length!==3) return null; const d=new Date(+p[0],+p[1]-1,+p[2]); return isNaN(d)?null:d; }
+function friendlyDate(s){ const d=parseDate(s); if(!d) return s||""; return DOW[d.getDay()]+" "+d.getDate()+" "+MON[d.getMonth()]; }
+function friendlyRange(a,b){ const da=parseDate(a),db=parseDate(b); if(!da||!db) return ""; const yr=db.getFullYear(); return DOW[da.getDay()]+" "+da.getDate()+" — "+DOW[db.getDay()]+" "+db.getDate()+" "+MON[db.getMonth()]+" "+yr; }
+function daysBetween(a,b){ const da=parseDate(a),db=parseDate(b); if(!da||!db) return 0; return Math.round((db-da)/86400000)+1; }
+
+/* ============================================================
+   Small UI pieces
+   ============================================================ */
+function Segmented({ options, value, onChange }) {
+  return (
+    <div className="seg-group">
+      {options.map(o => (
+        <button type="button" key={o.v}
+          className={"seg" + (value === o.v ? " active" : "")}
+          onClick={() => onChange(o.v)}>
+          <span className="seg-main">{o.v}</span>
+          {o.sub && <span className="seg-sub">{o.sub}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+function Chips({ options, value, onToggle, multi }) {
+  const active = (o) => multi ? value.includes(o) : value === o;
+  return (
+    <div className="chips">
+      {options.map(o => (
+        <button type="button" key={o}
+          className={"chip" + (active(o) ? " active" : "")}
+          onClick={() => onToggle(o)}>
+          {multi && <span className="dot" />}{o}
+        </button>
+      ))}
+    </div>
+  );
+}
+function Field({ label, required, hint, error, children, refEl }) {
+  return (
+    <div className={"field" + (error ? " invalid" : "")} ref={refEl}>
+      <div className="field-label">
+        {label}{required && <span className="req">*</span>}
+        {hint && <span className="field-hint">· {hint}</span>}
+      </div>
+      {children}
+      {error && <div className="err-msg"><Ic.alert width="14" height="14" />{error}</div>}
+    </div>
+  );
+}
+
+/* ============================================================
+   Header / Footer
+   ============================================================ */
+function Header({ theme, setTheme, accent, setAccent, onPlan }) {
+  return (
+    <header className="header">
+      <div className="container header-inner">
+        <div className="logo">
+          <span className="mark"><Ic.route width="20" height="20" /></span>
+          Voyagora
+        </div>
+        <div className="header-actions">
+          <div className="accent-picker label-hide">
+            {["indigo","teal","sky"].map(a => (
+              <span key={a} title={a}
+                className={"accent-swatch sw-"+a+(accent===a?" active":"")}
+                onClick={() => setAccent(a)} />
+            ))}
+          </div>
+          <button className="icon-btn" title="Toggle theme"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? <Ic.sun width="19" height="19" /> : <Ic.moon width="19" height="19" />}
+          </button>
+          <button className="btn btn-primary" onClick={onPlan}>Plan My Trip</button>
+        </div>
+      </div>
+    </header>
+  );
+}
+function Footer() {
+  return (
+    <footer className="footer">
+      <div className="container footer-inner">
+        <div>
+          <div className="logo"><span className="mark"><Ic.route width="20" height="20" /></span>Voyagora</div>
+          <p className="tagline">From idea to itinerary in minutes.</p>
+        </div>
+        <div className="footer-links">
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#privacy">Privacy</a>
+          <a href="#contact">Contact</a>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+/* ============================================================
+   Landing
+   ============================================================ */
+function Landing({ onSubmit, formRef }) {
+  const [f, setF] = useState(blankForm());
+  const [errors, setErrors] = useState({});
+  const refs = {
+    destination: useRef(), startDate: useRef(), endDate: useRef(), interests: useRef(),
+  };
+  const set = (k, v) => setF(prev => ({ ...prev, [k]: v }));
+
+  const toggleInterest = (o) =>
+    setF(prev => ({ ...prev, interests: prev.interests.includes(o)
+      ? prev.interests.filter(x => x !== o) : [...prev.interests, o] }));
+
+  const loadDemo = () => { setF({ ...DEMO }); setErrors({}); };
+
+  const validate = () => {
+    const e = {};
+    if (!f.destination.trim()) e.destination = "Where are you headed?";
+    if (!f.startDate) e.startDate = "Pick a start date.";
+    if (!f.endDate) e.endDate = "Pick an end date.";
+    if (f.startDate && f.endDate && parseDate(f.endDate) < parseDate(f.startDate))
+      e.endDate = "End date must be on or after the start date.";
+    if (!f.interests.length) e.interests = "Choose at least one interest.";
+    return e;
+  };
+
+  const submit = (ev) => {
+    ev.preventDefault();
+    const e = validate();
+    setErrors(e);
+    const order = ["destination","startDate","endDate","interests"];
+    const first = order.find(k => e[k]);
+    if (first) {
+      const node = refs[first] && refs[first].current;
+      if (node) node.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    onSubmit({ ...f, travelers: Number(f.travelers) });
+  };
+
+  const tripLen = (f.startDate && f.endDate && parseDate(f.endDate) >= parseDate(f.startDate)) ? daysBetween(f.startDate, f.endDate) : 0;
+
+  return (
+    <div className="fade-in">
+      {/* HERO */}
+      <section className="hero">
+        <span className="hero-orb orb-a" /><span className="hero-orb orb-b" />
+        <div className="container">
+          <span className="hero-badge"><Ic.spark width="15" height="15" /> AI-crafted, weather-aware travel plans</span>
+          <h1>From idea to <span className="gradient-text">itinerary</span> in minutes.</h1>
+          <p className="lead">Tell Voyagora where you’re going and what you love. Get a polished, day-by-day plan — with activities, places to eat, budgets and a live weather forecast — tailored to exactly how you travel.</p>
+          <div className="hero-cta">
+            <button className="btn btn-primary" onClick={() => formRef.current && formRef.current.scrollIntoView({ behavior:"smooth" })}>
+              Plan My Trip <Ic.arrow />
+            </button>
+            <button className="btn btn-ghost" onClick={loadDemo}>Load demo trip</button>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section className="section container" id="features">
+        <div className="section-eyebrow">Why Voyagora</div>
+        <div className="section-title">Trips planned the way you actually travel</div>
+        <p className="section-sub">No more juggling fifteen tabs. One form, one beautifully organised plan.</p>
+        <div className="grid-3 stagger">
+          <div className="card feature-card"><div className="feature-icon"><Ic.spark width="22" height="22" /></div>
+            <h3>Personal to a fault</h3><p>Every activity is matched to your interests, pace, budget, diet and mobility — down to indoor backups for rainy days.</p></div>
+          <div className="card feature-card"><div className="feature-icon"><Ic.partly width="22" height="22" /></div>
+            <h3>Weather-aware</h3><p>A live forecast sits beside your plan, with day-by-day advice so you’re never caught out.</p></div>
+          <div className="card feature-card"><div className="feature-icon"><Ic.route width="22" height="22" /></div>
+            <h3>Ready to go</h3><p>Morning, afternoon and evening — with times, costs, map links and where to eat — all in one place.</p></div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section className="section container" id="how">
+        <div className="section-eyebrow">How it works</div>
+        <div className="section-title">Three steps to a full itinerary</div>
+        <div className="steps stagger" style={{ marginTop: 22 }}>
+          <div className="step"><div className="num">1</div><h4>Tell us your trip</h4><p>Destination, dates, who’s coming and what you’re into.</p></div>
+          <div className="step"><div className="num">2</div><h4>We build the plan</h4><p>Our planner crafts a day-by-day itinerary tuned to your preferences.</p></div>
+          <div className="step"><div className="num">3</div><h4>Travel smarter</h4><p>Review, tweak in your head, and head out with everything sorted.</p></div>
+        </div>
+      </section>
+
+      {/* PLANNER FORM */}
+      <section className="planner-wrap container" ref={formRef}>
+        <form className="planner" onSubmit={submit} noValidate>
+          <div className="planner-head">
+            <div>
+              <h2>Plan your trip</h2>
+              <p>Fill in the details below — it takes about a minute.</p>
+            </div>
+            <button type="button" className="btn btn-soft" onClick={loadDemo}>✨ Load demo trip</button>
+          </div>
+
+          <Field label="Destination" required error={errors.destination} refEl={refs.destination}>
+            <div className="input-icon-wrap">
+              <span className="lead-icon"><Ic.pin /></span>
+              <input className="input" placeholder="e.g. Copenhagen, Denmark"
+                value={f.destination} onChange={e => set("destination", e.target.value)} />
+            </div>
+          </Field>
+
+          <div className="row">
+            <Field label="Start date" required error={errors.startDate} refEl={refs.startDate}>
+              <input type="date" className="date" value={f.startDate}
+                onChange={e => set("startDate", e.target.value)} />
+            </Field>
+            <Field label="End date" required error={errors.endDate} refEl={refs.endDate}>
+              <input type="date" className="date" value={f.endDate} min={f.startDate || undefined}
+                onChange={e => set("endDate", e.target.value)} />
+            </Field>
+          </div>
+
+          {tripLen > 0 && (
+            <div className="field-hint" style={{ marginTop:-10, marginBottom:18 }}>
+              <Ic.cal width="13" height="13" style={{verticalAlign:"-2px"}} /> {tripLen}-day trip · {friendlyRange(f.startDate, f.endDate)}
+            </div>
+          )}
+
+          <div className="row">
+            <Field label="Travelers" required>
+              <div className="stepper">
+                <button type="button" onClick={() => set("travelers", Math.max(1, Number(f.travelers)-1))}>−</button>
+                <span className="val">{f.travelers}</span>
+                <button type="button" onClick={() => set("travelers", Math.min(20, Number(f.travelers)+1))}>+</button>
+              </div>
+            </Field>
+            <div />
+          </div>
+
+          <Field label="Who's travelling" required>
+            <Segmented options={TRAVELER_TYPES} value={f.travelerType} onChange={v => set("travelerType", v)} />
+          </Field>
+
+          <div className="row">
+            <Field label="Budget level" required>
+              <Segmented options={BUDGETS} value={f.budget} onChange={v => set("budget", v)} />
+            </Field>
+            <Field label="Travel pace" required>
+              <Segmented options={PACES} value={f.pace} onChange={v => set("pace", v)} />
+            </Field>
+          </div>
+
+          <Field label="Interests" required hint="pick all that apply" error={errors.interests} refEl={refs.interests}>
+            <Chips options={INTERESTS} value={f.interests} onToggle={toggleInterest} multi />
+          </Field>
+
+          <Field label="Food preference">
+            <Chips options={FOOD_PREFS} value={f.foodPreference} onToggle={v => set("foodPreference", v)} />
+          </Field>
+
+          <Field label="Mobility preference">
+            <Chips options={MOBILITY} value={f.mobilityPreference} onToggle={v => set("mobilityPreference", v)} />
+          </Field>
+
+          <Field label="Special notes" hint="optional">
+            <textarea className="textarea" placeholder="Anything we should know? Travelling with kids, accessibility needs, must-sees…"
+              value={f.specialNotes} onChange={e => set("specialNotes", e.target.value)} />
+          </Field>
+
+          <div className="form-footer">
+            <span className="field-hint">Your details are sent securely to generate your plan.</span>
+            <span className="spacer" />
+            <button type="button" className="btn btn-soft" onClick={() => { setF(blankForm()); setErrors({}); }}>Reset</button>
+            <button type="submit" className="btn btn-primary submit">Plan My Trip <Ic.arrow /></button>
+          </div>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+/* ============================================================
+   Loading
+   ============================================================ */
+function Loading() {
+  const msgs = [
+    "Charting your route…",
+    "Matching activities to your interests…",
+    "Checking the skies for each day…",
+    "Finding places to eat you’ll love…",
+    "Polishing your day-by-day plan…",
+  ];
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setI(p => (p + 1) % msgs.length), 1800);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="loading-screen">
+      <div className="loading-card fade-in">
+        <div className="spinner" />
+        <h2>Building your itinerary</h2>
+        <div className="loading-status">{msgs[i]}</div>
+        <div className="loading-dots"><span/><span/><span/></div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   Itinerary view
+   ============================================================ */
+function ActivityCard({ a }) {
+  const IO = a.indoorOutdoor || "Mixed";
+  return (
+    <div className="activity">
+      <div className="activity-top">
+        {a.time && <span className="activity-time">{a.time}</span>}
+        <span className="activity-title">{a.title}</span>
+        <span className={"io-badge io-" + IO}>{IO}</span>
+      </div>
+      {a.description && <div className="activity-desc">{a.description}</div>}
+      <div className="activity-meta">
+        {a.location && <span><Ic.pin width="13" height="13" style={{verticalAlign:"-2px"}} /> {a.location}</span>}
+        {a.estimatedCost && <span className="cost">{a.estimatedCost}</span>}
+        {a.whyRecommended && <span className="why">“{a.whyRecommended}”</span>}
+        {a.mapUrl && a.mapUrl !== "#" &&
+          <a className="map-link" href={a.mapUrl} target="_blank" rel="noopener noreferrer">Map <Ic.ext /></a>}
+      </div>
+    </div>
+  );
+}
+function DayPart({ label, items, icon }) {
+  if (!items || !items.length) return null;
+  return (
+    <div className="daypart">
+      <div className="daypart-label">{icon} {label}</div>
+      {items.map((a, i) => <ActivityCard a={a} key={i} />)}
+    </div>
+  );
+}
+function DayCard({ day }) {
+  return (
+    <div className="card day-card">
+      <div className="day-head">
+        <div className="day-num">{day.dayNumber}</div>
+        <h3>{day.theme}</h3>
+        {day.date && <span className="day-date">{day.date}</span>}
+      </div>
+      {day.weatherSummary && (
+        <div className="day-weather-line">
+          {React.createElement(weatherIcon(day.weather.icon), { width:16, height:16 })} {day.weatherSummary}
+        </div>
+      )}
+
+      <DayPart label="Morning"   items={day.morning}   icon={<Ic.sun width="15" height="15" />} />
+      <DayPart label="Afternoon" items={day.afternoon} icon={<Ic.partly width="15" height="15" />} />
+      <DayPart label="Evening"   items={day.evening}   icon={<Ic.moon width="15" height="15" />} />
+
+      {day.restaurants && day.restaurants.length > 0 && (
+        <>
+          <div className="subhead"><Ic.fork /> Where to eat</div>
+          <div className="eat-list">
+            {day.restaurants.map((r, i) => (
+              <div className="restaurant" key={i}>
+                <div>
+                  <div className="r-name">{r.name}</div>
+                  <div className="r-meta">
+                    {[r.cuisine, r.location, r.estimatedCost].filter(Boolean).join(" · ")}
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  {r.foodPreferenceMatch && <span className="r-match">{r.foodPreferenceMatch}</span>}
+                  {r.mapUrl && r.mapUrl !== "#" &&
+                    <a className="map-link" href={r.mapUrl} target="_blank" rel="noopener noreferrer">Map <Ic.ext /></a>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {day.backupPlan && (
+        <div className="callout">
+          <span style={{color:"var(--accent-1)"}}><Ic.shield width="20" height="20" /></span>
+          <div><div className="ct-title">Backup plan</div><p>{day.backupPlan}</p></div>
+        </div>
+      )}
+
+      {(day.estimatedBudget || day.walkingLevel) && (
+        <div className="day-footer">
+          {day.estimatedBudget && <span className="foot-chip"><Ic.wallet /> {day.estimatedBudget}</span>}
+          {day.walkingLevel && <span className="foot-chip"><Ic.walk /> {day.walkingLevel}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+function WeatherCard({ day }) {
+  const w = day.weather;
+  return (
+    <div className="card weather-card">
+      <div className="wc-top">
+        <div>
+          <div className="wc-day">Day {day.dayNumber}</div>
+          <div className="wc-date">{day.date}</div>
+        </div>
+        <span className="weather-icon">{React.createElement(weatherIcon(w.icon), { width:42, height:42 })}</span>
+      </div>
+      <div className="wc-temp">{w.temperature != null ? w.temperature + "°C" : "—"}</div>
+      <div className="wc-cond">{w.condition}</div>
+      <div className="wc-stats">
+        <span className="s"><Ic.drop /> {w.rainProbability != null ? w.rainProbability + "% rain" : "—"}</span>
+        {w.wind && <span className="s"><Ic.wind width="14" height="14" /> {w.wind}</span>}
+      </div>
+      {w.travelAdvice && <div className="wc-advice">{w.travelAdvice}</div>}
+    </div>
+  );
+}
+
+// Lightweight markdown renderer for prose itineraries (bold, bullets, headings, rules)
+function MiniMarkdown({ text }) {
+  const inline = (s) => s.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    (part.startsWith("**") && part.endsWith("**"))
+      ? <strong key={i}>{part.slice(2, -2)}</strong> : <React.Fragment key={i}>{part}</React.Fragment>);
+  const out = []; let key = 0; let bullets = null;
+  const flush = () => { if (bullets) { out.push(<ul key={key++} className="md-ul">{bullets}</ul>); bullets = null; } };
+  text.split(/\r?\n/).forEach((ln) => {
+    const t = ln.trim();
+    if (!t) { flush(); return; }
+    if (/^([-*_]\s*){3,}$/.test(t) || /^---+$/.test(t)) { flush(); out.push(<hr key={key++} className="md-hr" />); return; }
+    if (/^[-*•]\s+/.test(t)) { (bullets = bullets || []).push(<li key={key++}>{inline(t.replace(/^[-*•]\s+/, ""))}</li>); return; }
+    flush();
+    if (/^#{1,6}\s/.test(t)) { out.push(<h3 key={key++} className="md-h">{inline(t.replace(/^#{1,6}\s/, ""))}</h3>); return; }
+    if (/^\*\*.+\*\*:?$/.test(t)) { out.push(<h4 key={key++} className="md-h">{inline(t)}</h4>); return; }
+    out.push(<p key={key++} className="md-p">{inline(t)}</p>);
+  });
+  flush();
+  return <div className="md">{out}</div>;
+}
+
+function Itinerary({ data, onNew }) {
+  if (data.__raw) {
+    return (
+      <div className="container fade-in">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginTop:18,flexWrap:"wrap"}}>
+          <button className="btn btn-ghost" onClick={onNew}>← Plan another trip</button>
+          <button className="btn btn-soft" onClick={() => window.print()}>Save / Print</button>
+        </div>
+        <div className="itin-header">
+          <div className="kicker"><Ic.spark width="15" height="15" /> Your itinerary is ready</div>
+          <h1>{data.title}</h1>
+          <div className="itin-meta">
+            <span className="m"><Ic.pin /> {data.destination}</span>
+            {data.dates && <span className="m"><Ic.cal /> {data.dates}</span>}
+          </div>
+        </div>
+        <div className="info-banner">
+          <span className="b-icon"><Ic.spark width="18" height="18" /></span>
+          <div>The planner returned a text itinerary. For the full interactive day-by-day layout with weather cards, configure the model node to return JSON (see the setup guide).</div>
+        </div>
+        <div className="card"><MiniMarkdown text={data.__raw} /></div>
+      </div>
+    );
+  }
+  return (
+    <div className="container fade-in">
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginTop:18,flexWrap:"wrap"}}>
+        <button className="btn btn-ghost" onClick={onNew}>← Plan another trip</button>
+        <button className="btn btn-soft" onClick={() => window.print()}>Save / Print</button>
+      </div>
+
+      {data.__error && (
+        <div className="banner" style={{marginTop:16}}>
+          <span className="b-icon"><Ic.alert /></span>
+          <div>
+            <h4>We couldn’t build a full itinerary</h4>
+            <p>{data.summary}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Summary header */}
+      <div className="itin-header">
+        <div className="kicker"><Ic.spark width="15" height="15" /> Your itinerary is ready</div>
+        <h1>{data.title}</h1>
+        <div className="itin-meta">
+          <span className="m"><Ic.pin /> {data.destination}</span>
+          {data.dates && <span className="m"><Ic.cal /> {data.dates}</span>}
+          <span className="m"><Ic.route width="18" height="18" /> {data.days.length} day{data.days.length>1?"s":""}</span>
+          {data.origin && <span className="m"><Ic.arrow /> {data.origin}</span>}
+        </div>
+        {data.summary && !data.__error && <p className="itin-summary">{data.summary}</p>}
+        {data.preferences && data.preferences.length > 0 && (
+          <div className="pref-badges">
+            {data.preferences.map((p, i) => <span className="pref-badge" key={i}>{p}</span>)}
+          </div>
+        )}
+      </div>
+
+      {/* Day column + weather sidebar */}
+      <div className="itin-grid">
+        <div className="stagger">
+          {data.days.map((d, i) => <DayCard day={d} key={i} />)}
+        </div>
+        <aside className="weather-side">
+          <div className="side-title">Weather forecast</div>
+          {data.days.map((d, i) => <WeatherCard day={d} key={i} />)}
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   App root
+   ============================================================ */
+function App() {
+  const [theme, setTheme] = useState("light");
+  const [accent, setAccent] = useState("indigo");
+  const [view, setView] = useState("landing"); // landing | loading | itinerary
+  const [itin, setItin] = useState(null);
+  const formRef = useRef();
+
+  useEffect(() => { document.documentElement.setAttribute("data-theme", theme); }, [theme]);
+  useEffect(() => { document.documentElement.setAttribute("data-accent", accent); }, [accent]);
+
+  const handleSubmit = async (req) => {
+    setView("loading");
+    window.scrollTo(0, 0);
+    const result = await planTrip(req); // never rejects
+    setItin(result);
+    setView("itinerary");
+    window.scrollTo(0, 0);
+  };
+
+  const goLanding = () => { setView("landing"); window.scrollTo(0, 0); };
+  const scrollToForm = () => {
+    if (view !== "landing") { setView("landing"); setTimeout(() => formRef.current && formRef.current.scrollIntoView({behavior:"smooth"}), 60); }
+    else if (formRef.current) formRef.current.scrollIntoView({ behavior:"smooth" });
+  };
+
+  return (
+    <>
+      {view !== "loading" &&
+        <Header theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent} onPlan={scrollToForm} />}
+
+      {view === "landing"   && <Landing onSubmit={handleSubmit} formRef={formRef} />}
+      {view === "loading"   && <Loading />}
+      {view === "itinerary" && <Itinerary data={itin} onNew={goLanding} />}
+
+      {view !== "loading" && <Footer />}
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
