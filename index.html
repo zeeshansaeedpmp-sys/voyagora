@@ -13,6 +13,9 @@
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+<!-- Supabase (auth + database) from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
 <style>
 /* ============================================================
    Theme tokens
@@ -522,6 +525,68 @@ button { font-family: inherit; cursor: pointer; }
   .hero { padding: 44px 0 18px; }
   .header-actions .label-hide { display: none; }
 }
+
+/* ============================================================
+   Auth modal, toast, My Trips
+   ============================================================ */
+.user-email { font-weight: 700; font-size: 13.5px; color: var(--text-soft); max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 20px;
+  background: rgba(10,12,22,.55); backdrop-filter: blur(4px); animation: fadeIn .2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 22px; box-shadow: var(--shadow-lg); padding: 28px; position: relative;
+  animation: fadeUp .35s cubic-bezier(.2,.7,.3,1) both;
+}
+.modal-close {
+  position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text); display: grid; place-items: center;
+}
+.modal-close:hover { background: var(--surface-3); }
+.modal h2 { margin: 2px 0 4px; font-size: 22px; letter-spacing: -0.02em; }
+.modal .modal-sub { color: var(--text-soft); font-size: 14px; margin: 0 0 18px; }
+.auth-tabs { display: flex; gap: 6px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 5px; margin-bottom: 20px; }
+.auth-tab { flex: 1; border: none; background: transparent; color: var(--text-soft); font-weight: 700; font-size: 14px; padding: 9px; border-radius: var(--radius-pill); transition: all .15s; }
+.auth-tab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+.auth-field { margin-bottom: 14px; }
+.auth-field label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+.auth-msg { font-size: 13.5px; font-weight: 600; padding: 11px 13px; border-radius: var(--radius-sm); margin-bottom: 16px; display: flex; gap: 8px; align-items: flex-start; }
+.auth-msg.error { color: var(--danger); background: var(--danger-soft); }
+.auth-msg.info { color: var(--accent-1); background: var(--accent-soft); }
+[data-theme="dark"] .auth-msg.info { color: var(--text); }
+.modal .btn-primary { width: 100%; justify-content: center; padding: 13px; font-size: 15px; margin-top: 4px; }
+.modal .btn-primary[disabled] { opacity: .6; cursor: default; }
+
+.toast {
+  position: fixed; bottom: 26px; left: 50%; z-index: 300; transform: translateX(-50%);
+  background: var(--text); color: var(--bg); padding: 12px 22px; border-radius: var(--radius-pill);
+  font-weight: 700; font-size: 14px; box-shadow: var(--shadow-lg); display: flex; gap: 8px; align-items: center;
+  animation: toastIn .3s cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+.mytrips-wrap { padding: 30px 0 50px; }
+.mytrips-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+.mytrips-head h1 { font-size: clamp(26px, 4vw, 36px); letter-spacing: -0.03em; margin: 0; }
+.mytrips-head p { margin: 4px 0 0; color: var(--text-soft); }
+.trips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+.trip-card { display: flex; flex-direction: column; }
+.trip-card .tc-dest { font-weight: 800; font-size: 18px; letter-spacing: -0.01em; display: flex; gap: 8px; align-items: center; }
+.trip-card .tc-title { color: var(--text-soft); font-size: 14.5px; margin: 7px 0 0; }
+.trip-card .tc-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 14px 0; font-size: 13px; color: var(--text-faint); }
+.trip-card .tc-meta .s { display: inline-flex; gap: 6px; align-items: center; }
+.trip-card .tc-actions { display: flex; gap: 10px; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+.trip-card .tc-actions .btn { flex: 1; justify-content: center; }
+.btn-danger { background: var(--danger-soft); color: var(--danger); border: 1px solid transparent; }
+.btn-danger:hover { border-color: var(--danger); }
+.empty-state { text-align: center; padding: 60px 20px; }
+.empty-state .es-icon { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-1); margin: 0 auto 18px; }
+[data-theme="dark"] .empty-state .es-icon { color: var(--text); }
+.empty-state h2 { margin: 0 0 8px; font-size: 22px; }
+.empty-state p { color: var(--text-soft); margin: 0 0 20px; }
 </style>
 </head>
 <body>
@@ -535,6 +600,19 @@ const { useState, useEffect, useRef, useMemo } = React;
    ============================================================ */
 const WEBHOOK_URL = "https://zeeshansaeed777.app.n8n.cloud/webhook/4ba21abf-25a1-48cd-bf30-07b299673352";
 const ENABLE_OPEN_METEO_FALLBACK = true; // non-blocking weather enrichment
+
+/* ---- Supabase (auth + saved itineraries) ---- */
+const SUPABASE_URL = "PASTE_YOUR_SUPABASE_URL_HERE";
+const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
+// Only initialise once real values are pasted — keeps the app fully working with placeholders.
+const AUTH_CONFIGURED =
+  /^https?:\/\//.test(SUPABASE_URL) && !SUPABASE_URL.includes("PASTE") &&
+  SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes("PASTE");
+// NOTE: the Supabase UMD CDN defines a GLOBAL named `supabase`, so we must name
+// our client something else (here `sb`) to avoid a redeclaration error.
+const sb = AUTH_CONFIGURED
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
 /* ============================================================
    Icons (inline SVG line icons)
@@ -562,6 +640,13 @@ const Ic = {
   ext:    (p)=> <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M15 3h6v6M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>,
   plane:  (p)=> <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 4.8c.3.4.9.5 1.3.3l.5-.3c.4-.2.6-.7.5-1.1Z"/></svg>,
   bed:    (p)=> <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></svg>,
+  user:   (p)=> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  out:    (p)=> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>,
+  trash:  (p)=> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg>,
+  clock:  (p)=> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>,
+  eye:    (p)=> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
+  x:      (p)=> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M18 6 6 18M6 6l12 12"/></svg>,
+  check:  (p)=> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20 6 9 17l-5-5"/></svg>,
 };
 const weatherIcon = (key) => {
   const map = { rain: Ic.rain, sun: Ic.sun, cloud: Ic.cloud, partly: Ic.partly, wind: Ic.wind };
@@ -960,6 +1045,17 @@ function parseDate(s){ if(!s) return null; const p=s.split("-"); if(p.length!==3
 function friendlyDate(s){ const d=parseDate(s); if(!d) return s||""; return DOW[d.getDay()]+" "+d.getDate()+" "+MON[d.getMonth()]; }
 function friendlyRange(a,b){ const da=parseDate(a),db=parseDate(b); if(!da||!db) return ""; const yr=db.getFullYear(); return DOW[da.getDay()]+" "+da.getDate()+" — "+DOW[db.getDay()]+" "+db.getDate()+" "+MON[db.getMonth()]+" "+yr; }
 function daysBetween(a,b){ const da=parseDate(a),db=parseDate(b); if(!da||!db) return 0; return Math.round((db-da)/86400000)+1; }
+function relativeTime(iso){
+  const then = new Date(iso).getTime();
+  if (isNaN(then)) return "";
+  const s = Math.max(1, Math.floor((Date.now() - then) / 1000));
+  if (s < 60) return "just now";
+  const m = Math.floor(s/60); if (m < 60) return m + (m>1?" mins ago":" min ago");
+  const h = Math.floor(m/60); if (h < 24) return h + (h>1?" hours ago":" hour ago");
+  const d = Math.floor(h/24); if (d < 30) return d + (d>1?" days ago":" day ago");
+  const mo = Math.floor(d/30); if (mo < 12) return mo + (mo>1?" months ago":" month ago");
+  const y = Math.floor(mo/12); return y + (y>1?" years ago":" year ago");
+}
 
 /* ============================================================
    Small UI pieces
@@ -1008,11 +1104,12 @@ function Field({ label, required, hint, error, children, refEl }) {
 /* ============================================================
    Header / Footer
    ============================================================ */
-function Header({ theme, setTheme, accent, setAccent, onPlan, timezone, setTimezone, currency, setCurrency }) {
+function Header({ theme, setTheme, accent, setAccent, onPlan, timezone, setTimezone, currency, setCurrency,
+                 onHome, authEnabled, user, onSignIn, onMyTrips, onSignOut }) {
   return (
     <header className="header">
       <div className="container header-inner">
-        <div className="logo">
+        <div className="logo" onClick={onHome} style={{ cursor: "pointer" }}>
           <span className="mark"><Ic.route width="20" height="20" /></span>
           Voyagora
         </div>
@@ -1040,6 +1137,18 @@ function Header({ theme, setTheme, accent, setAccent, onPlan, timezone, setTimez
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
             {theme === "dark" ? <Ic.sun width="19" height="19" /> : <Ic.moon width="19" height="19" />}
           </button>
+
+          {authEnabled && user && (
+            <>
+              <span className="user-email label-hide" title={user.email}>{user.email}</span>
+              <button className="btn btn-soft" onClick={onMyTrips}><Ic.route width="16" height="16" /> My Trips</button>
+              <button className="btn btn-ghost" onClick={onSignOut}><Ic.out /> <span className="label-hide">Sign out</span></button>
+            </>
+          )}
+          {authEnabled && !user && (
+            <button className="btn btn-ghost" onClick={onSignIn}><Ic.user /> Sign in</button>
+          )}
+
           <button className="btn btn-primary" onClick={onPlan}>Plan My Trip</button>
         </div>
       </div>
@@ -1456,13 +1565,16 @@ function MiniMarkdown({ text }) {
   return <div className="md">{out}</div>;
 }
 
-function Itinerary({ data, req, onNew }) {
+function Itinerary({ data, req, onNew, savedMode, onBackToTrips }) {
   const urls = bookingUrls(req, data.destination);
+  const backBtn = savedMode
+    ? <button className="btn btn-ghost" onClick={onBackToTrips}>← Back to My Trips</button>
+    : <button className="btn btn-ghost" onClick={onNew}>← Plan another trip</button>;
   if (data.__raw) {
     return (
       <div className="container fade-in">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginTop:18,flexWrap:"wrap"}}>
-          <button className="btn btn-ghost" onClick={onNew}>← Plan another trip</button>
+          {backBtn}
           <button className="btn btn-soft" onClick={() => window.print()}>Save / Print</button>
         </div>
         <div className="itin-header">
@@ -1485,7 +1597,7 @@ function Itinerary({ data, req, onNew }) {
   return (
     <div className="container fade-in">
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginTop:18,flexWrap:"wrap"}}>
-        <button className="btn btn-ghost" onClick={onNew}>← Plan another trip</button>
+        {backBtn}
         <button className="btn btn-soft" onClick={() => window.print()}>Save / Print</button>
       </div>
 
@@ -1534,6 +1646,130 @@ function Itinerary({ data, req, onNew }) {
 }
 
 /* ============================================================
+   Auth modal
+   ============================================================ */
+function AuthModal({ mode, setMode, message, onClose, onSuccess }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [err, setErr] = useState("");
+  const [info, setInfo] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const switchMode = (m) => { setMode(m); setErr(""); setInfo(""); };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setErr(""); setInfo("");
+    if (!email.trim() || !password) { setErr("Enter your email and password."); return; }
+    if (mode === "signup" && password.length < 6) { setErr("Password must be at least 6 characters."); return; }
+    setBusy(true);
+    try {
+      if (mode === "signup") {
+        const { data, error } = await sb.auth.signUp({ email: email.trim(), password });
+        if (error) { setErr(error.message); setBusy(false); return; }
+        if (data.session) { onSuccess(data.session); return; }   // email confirmation disabled → straight in
+        setInfo("Check your email for a confirmation link. You can sign in once confirmed.");
+        setBusy(false);
+      } else {
+        const { data, error } = await sb.auth.signInWithPassword({ email: email.trim(), password });
+        if (error) { setErr(error.message); setBusy(false); return; }
+        onSuccess(data.session);
+      }
+    } catch (e) {
+      setErr((e && e.message) || "Something went wrong. Please try again.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal">
+        <button className="modal-close" onClick={onClose} aria-label="Close"><Ic.x /></button>
+        <h2>{mode === "signup" ? "Create your account" : "Welcome back"}</h2>
+        <p className="modal-sub">{message || (mode === "signup" ? "Sign up to save and revisit your trips." : "Sign in to your Voyagora account.")}</p>
+
+        <div className="auth-tabs">
+          <button className={"auth-tab" + (mode === "signin" ? " active" : "")} onClick={() => switchMode("signin")}>Sign in</button>
+          <button className={"auth-tab" + (mode === "signup" ? " active" : "")} onClick={() => switchMode("signup")}>Sign up</button>
+        </div>
+
+        {err &&  <div className="auth-msg error"><Ic.alert width="16" height="16" /> {err}</div>}
+        {info && <div className="auth-msg info"><Ic.check /> {info}</div>}
+
+        <form onSubmit={submit}>
+          <div className="auth-field">
+            <label>Email</label>
+            <input className="input" type="email" autoComplete="email" placeholder="you@example.com"
+              value={email} onChange={e => setEmail(e.target.value)} />
+          </div>
+          <div className="auth-field">
+            <label>Password</label>
+            <input className="input" type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              placeholder={mode === "signup" ? "At least 6 characters" : "Your password"}
+              value={password} onChange={e => setPassword(e.target.value)} />
+          </div>
+          <button type="submit" className="btn btn-primary" disabled={busy}>
+            {busy ? "Please wait…" : (mode === "signup" ? "Create account" : "Sign in")}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   My Trips view
+   ============================================================ */
+function MyTrips({ trips, loading, onView, onDelete, onPlan }) {
+  return (
+    <div className="container mytrips-wrap fade-in">
+      <div className="mytrips-head">
+        <div>
+          <h1>My Trips</h1>
+          <p>{loading ? "Loading your saved trips…" : (trips.length ? `${trips.length} saved trip${trips.length>1?"s":""}` : "Your saved itineraries live here.")}</p>
+        </div>
+        <button className="btn btn-primary" onClick={onPlan}>Plan a new trip <Ic.arrow /></button>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign:"center", padding:"50px 0" }}><div className="spinner" /></div>
+      ) : trips.length === 0 ? (
+        <div className="card empty-state">
+          <div className="es-icon"><Ic.route width="30" height="30" /></div>
+          <h2>No trips yet</h2>
+          <p>Plan your first one and it’ll be saved here automatically.</p>
+          <button className="btn btn-primary" onClick={onPlan}>Plan your first trip <Ic.arrow /></button>
+        </div>
+      ) : (
+        <div className="trips-grid stagger">
+          {trips.map((t) => {
+            const dates = (t.itinerary && t.itinerary.dates)
+              || friendlyRange(t.request && t.request.startDate, t.request && t.request.endDate)
+              || "";
+            const dayCount = (t.itinerary && Array.isArray(t.itinerary.days)) ? t.itinerary.days.length : null;
+            return (
+              <div className="card trip-card" key={t.id}>
+                <div className="tc-dest"><Ic.pin /> {t.destination}</div>
+                {t.title && <div className="tc-title">{t.title}</div>}
+                <div className="tc-meta">
+                  {dates && <span className="s"><Ic.cal width="14" height="14" /> {dates}</span>}
+                  {dayCount != null && <span className="s"><Ic.route width="14" height="14" /> {dayCount} day{dayCount>1?"s":""}</span>}
+                  <span className="s"><Ic.clock /> {relativeTime(t.created_at)}</span>
+                </div>
+                <div className="tc-actions">
+                  <button className="btn btn-soft" onClick={() => onView(t)}><Ic.eye /> View</button>
+                  <button className="btn btn-danger" onClick={() => onDelete(t)}><Ic.trash /> Delete</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
    App root
    ============================================================ */
 function App() {
@@ -1541,25 +1777,133 @@ function App() {
   const [accent, setAccent] = useState("indigo");
   const [timezone, setTimezone] = useState(detectTimezone);
   const [currency, setCurrency] = useState("USD");
-  const [view, setView] = useState("landing"); // landing | loading | itinerary
+  const [view, setView] = useState("landing"); // landing | loading | itinerary | mytrips
   const [itin, setItin] = useState(null);
   const [req, setReq] = useState(null);
+  const [savedMode, setSavedMode] = useState(false);
+
+  // auth + data
+  const [user, setUser] = useState(null);
+  const [trips, setTrips] = useState([]);
+  const [tripsLoading, setTripsLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState("signin");
+  const [authMessage, setAuthMessage] = useState("");
+  const [pendingReq, setPendingReq] = useState(null);
+  const [toast, setToast] = useState(null);
+
   const formRef = useRef();
 
   useEffect(() => { document.documentElement.setAttribute("data-theme", theme); }, [theme]);
   useEffect(() => { document.documentElement.setAttribute("data-accent", accent); }, [accent]);
 
-  const handleSubmit = async (req) => {
-    setReq(req);
+  // restore session + react to auth changes across tabs
+  useEffect(() => {
+    if (!sb) return;
+    sb.auth.getSession().then(({ data }) => {
+      if (data && data.session) setUser({ id: data.session.user.id, email: data.session.user.email });
+    });
+    const { data: sub } = sb.auth.onAuthStateChange((_event, session) => {
+      setUser(session ? { id: session.user.id, email: session.user.email } : null);
+    });
+    return () => { sub.subscription.unsubscribe(); };
+  }, []);
+
+  // auto-dismiss toast
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2600);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const showToast = (msg) => setToast(msg);
+
+  // generate + auto-save (asUser avoids a state-update race right after sign-in)
+  const generate = async (request, asUser) => {
+    const u = asUser || user;
+    setReq(request);
+    setSavedMode(false);
     setView("loading");
     window.scrollTo(0, 0);
-    const result = await planTrip(req); // never rejects
+    const result = await planTrip(request); // never rejects
     setItin(result);
+    setView("itinerary");
+    window.scrollTo(0, 0);
+    if (sb && u && !result.__error) {
+      try {
+        const { error } = await sb.from("itineraries").insert({
+          user_id: u.id,
+          destination: request.destination,
+          title: result.title,
+          request: request,
+          itinerary: result,
+        });
+        if (!error) showToast("Trip saved");
+      } catch (e) { /* non-blocking */ }
+    }
+  };
+
+  // gate generation behind auth when configured
+  const handleSubmit = (request) => {
+    if (sb && !user) {
+      setPendingReq(request);
+      setAuthMode("signin");
+      setAuthMessage("Sign in to generate and save your trip.");
+      setShowAuthModal(true);
+      return;
+    }
+    generate(request);
+  };
+
+  const onAuthSuccess = (session) => {
+    const u = session ? { id: session.user.id, email: session.user.email } : user;
+    if (u) setUser(u);
+    setShowAuthModal(false);
+    setAuthMessage("");
+    if (pendingReq) { const r = pendingReq; setPendingReq(null); generate(r, u); }
+  };
+
+  const openSignIn = () => { setAuthMode("signin"); setAuthMessage(""); setShowAuthModal(true); };
+  const closeAuth = () => { setShowAuthModal(false); setAuthMessage(""); setPendingReq(null); };
+
+  const openMyTrips = async () => {
+    setView("mytrips");
+    window.scrollTo(0, 0);
+    if (!sb) return;
+    setTripsLoading(true);
+    try {
+      const { data } = await sb.from("itineraries").select("*").order("created_at", { ascending: false });
+      setTrips(data || []);
+    } catch (e) { setTrips([]); }
+    setTripsLoading(false);
+  };
+
+  const viewSavedTrip = (trip) => {
+    setItin(trip.itinerary);
+    setReq(trip.request || {});
+    setSavedMode(true);
     setView("itinerary");
     window.scrollTo(0, 0);
   };
 
-  const goLanding = () => { setView("landing"); window.scrollTo(0, 0); };
+  const deleteTrip = async (trip) => {
+    if (!window.confirm(`Delete your "${trip.destination}" trip? This can’t be undone.`)) return;
+    if (sb) {
+      try { await sb.from("itineraries").delete().eq("id", trip.id); } catch (e) {}
+    }
+    setTrips(prev => prev.filter(t => t.id !== trip.id));
+    showToast("Trip deleted");
+  };
+
+  const signOut = async () => {
+    if (sb) { try { await sb.auth.signOut(); } catch (e) {} }
+    setUser(null);
+    setTrips([]);
+    setView("landing");
+    window.scrollTo(0, 0);
+  };
+
+  const goLanding = () => { setSavedMode(false); setView("landing"); window.scrollTo(0, 0); };
   const scrollToForm = () => {
     if (view !== "landing") { setView("landing"); setTimeout(() => formRef.current && formRef.current.scrollIntoView({behavior:"smooth"}), 60); }
     else if (formRef.current) formRef.current.scrollIntoView({ behavior:"smooth" });
@@ -1569,13 +1913,22 @@ function App() {
     <>
       {view !== "loading" &&
         <Header theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent} onPlan={scrollToForm}
-          timezone={timezone} setTimezone={setTimezone} currency={currency} setCurrency={setCurrency} />}
+          timezone={timezone} setTimezone={setTimezone} currency={currency} setCurrency={setCurrency}
+          onHome={goLanding} authEnabled={!!sb}
+          user={user} onSignIn={openSignIn} onMyTrips={openMyTrips} onSignOut={signOut} />}
 
       {view === "landing"   && <Landing onSubmit={handleSubmit} formRef={formRef} />}
       {view === "loading"   && <Loading />}
-      {view === "itinerary" && <Itinerary data={itin} req={req} onNew={goLanding} />}
+      {view === "itinerary" && <Itinerary data={itin} req={req} onNew={goLanding} savedMode={savedMode} onBackToTrips={openMyTrips} />}
+      {view === "mytrips"   && <MyTrips trips={trips} loading={tripsLoading} onView={viewSavedTrip} onDelete={deleteTrip} onPlan={scrollToForm} />}
 
       {view !== "loading" && <Footer />}
+
+      {showAuthModal && (
+        <AuthModal mode={authMode} setMode={setAuthMode} message={authMessage}
+          onClose={closeAuth} onSuccess={onAuthSuccess} />
+      )}
+      {toast && <div className="toast"><Ic.check /> {toast}</div>}
     </>
   );
 }

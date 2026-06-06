@@ -44,6 +44,31 @@ nicely as a fallback.
 
 ---
 
+## Supabase setup (auth + saved trips)
+
+Voyagora supports optional **email login** and **saved trip history** via Supabase. If the two
+constants are left as placeholders the app still works fully — the auth UI is simply hidden.
+
+1. Create a project at [supabase.com](https://supabase.com). Copy **Project URL** and the
+   **anon public** key from **Project Settings → API**.
+2. Paste them into the two constants at the top of the script in `index.html`:
+   ```js
+   const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+   const SUPABASE_ANON_KEY = "your-anon-public-key";
+   ```
+3. Run the SQL in [`supabase-schema.sql`](supabase-schema.sql) in **Supabase → SQL Editor** to
+   create the `itineraries` table and row-level-security policies.
+4. **Auth → Providers → Email**: keep Email enabled. To let users use the app immediately after
+   sign-up, turn **"Confirm email" OFF** (otherwise Supabase requires the confirmation link before
+   a session is issued; the app handles both, showing "Check your email for a confirmation link.").
+5. **Auth → URL Configuration**: add your site URL (e.g. `https://voyagora.netlify.app`) to the
+   allowed redirect/site URLs.
+
+> Note: the Supabase CDN library defines a global named `supabase`, so the client in this app is
+> named `sb` to avoid a redeclaration clash — keep it that way.
+
+---
+
 ## n8n setup (required for the full interactive layout)
 
 The workflow is **Webhook → Message a model → Respond to Webhook**.
