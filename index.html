@@ -480,6 +480,28 @@ button { font-family: inherit; cursor: pointer; }
 .sw-teal { background: linear-gradient(135deg,#0d9488,#0ea5a4); }
 .sw-sky { background: linear-gradient(135deg,#0284c7,#0ea5e9); }
 
+/* header selects (timezone / currency) */
+.header-select-wrap { display: flex; align-items: center; gap: 6px; }
+.header-select-wrap .sel-label { font-size: 12px; font-weight: 700; color: var(--text-faint); white-space: nowrap; }
+.header-select {
+  appearance: none; -webkit-appearance: none;
+  background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23818699' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+  border: 1px solid var(--border); border-radius: var(--radius-pill);
+  color: var(--text); font-family: inherit; font-size: 13px; font-weight: 600;
+  padding: 7px 30px 7px 12px; cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+  max-width: 180px;
+}
+.header-select:focus { outline: none; border-color: var(--accent-1); box-shadow: 0 0 0 3px var(--accent-soft); }
+.header-select:hover { border-color: var(--border-strong); }
+@media (max-width: 768px) {
+  .header-select-wrap .sel-label { display: none; }
+  .header-select { max-width: 120px; font-size: 12px; padding: 6px 26px 6px 10px; }
+}
+@media (max-width: 480px) {
+  .header-select { max-width: 90px; }
+}
+
 /* animations */
 @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 .fade-in { animation: fadeUp .5s cubic-bezier(.2,.7,.3,1) both; }
@@ -549,6 +571,76 @@ const weatherIcon = (key) => {
 /* ============================================================
    Form option definitions
    ============================================================ */
+/* ============================================================
+   Timezone & Currency data
+   ============================================================ */
+const TIMEZONES = [
+  { v: "Pacific/Midway",      l: "UTC−11 · Midway Island" },
+  { v: "Pacific/Honolulu",    l: "UTC−10 · Hawaii" },
+  { v: "America/Anchorage",   l: "UTC−9  · Alaska" },
+  { v: "America/Los_Angeles", l: "UTC−8  · Pacific Time (US)" },
+  { v: "America/Denver",      l: "UTC−7  · Mountain Time (US)" },
+  { v: "America/Chicago",     l: "UTC−6  · Central Time (US)" },
+  { v: "America/New_York",    l: "UTC−5  · Eastern Time (US)" },
+  { v: "America/Halifax",     l: "UTC−4  · Atlantic Time (CA)" },
+  { v: "America/St_Johns",    l: "UTC−3:30 · Newfoundland" },
+  { v: "America/Sao_Paulo",   l: "UTC−3  · São Paulo" },
+  { v: "Atlantic/Azores",     l: "UTC−1  · Azores" },
+  { v: "Europe/London",       l: "UTC+0  · London / Dublin" },
+  { v: "Europe/Paris",        l: "UTC+1  · Paris / Berlin / Rome" },
+  { v: "Europe/Helsinki",     l: "UTC+2  · Helsinki / Cairo" },
+  { v: "Europe/Moscow",       l: "UTC+3  · Moscow / Riyadh" },
+  { v: "Asia/Dubai",          l: "UTC+4  · Dubai / Baku" },
+  { v: "Asia/Karachi",        l: "UTC+5  · Karachi / Islamabad" },
+  { v: "Asia/Kolkata",        l: "UTC+5:30 · India" },
+  { v: "Asia/Dhaka",          l: "UTC+6  · Dhaka / Almaty" },
+  { v: "Asia/Bangkok",        l: "UTC+7  · Bangkok / Jakarta" },
+  { v: "Asia/Singapore",      l: "UTC+8  · Singapore / Beijing" },
+  { v: "Asia/Tokyo",          l: "UTC+9  · Tokyo / Seoul" },
+  { v: "Australia/Adelaide",  l: "UTC+9:30 · Adelaide" },
+  { v: "Australia/Sydney",    l: "UTC+10 · Sydney / Melbourne" },
+  { v: "Pacific/Noumea",      l: "UTC+11 · New Caledonia" },
+  { v: "Pacific/Auckland",    l: "UTC+12 · Auckland / Fiji" },
+];
+
+const CURRENCIES = [
+  { v: "USD", l: "USD — US Dollar ($)" },
+  { v: "EUR", l: "EUR — Euro (€)" },
+  { v: "GBP", l: "GBP — British Pound (£)" },
+  { v: "CAD", l: "CAD — Canadian Dollar (CA$)" },
+  { v: "AUD", l: "AUD — Australian Dollar (A$)" },
+  { v: "NZD", l: "NZD — New Zealand Dollar (NZ$)" },
+  { v: "CHF", l: "CHF — Swiss Franc (CHF)" },
+  { v: "JPY", l: "JPY — Japanese Yen (¥)" },
+  { v: "CNY", l: "CNY — Chinese Yuan (¥)" },
+  { v: "KRW", l: "KRW — South Korean Won (₩)" },
+  { v: "INR", l: "INR — Indian Rupee (₹)" },
+  { v: "SGD", l: "SGD — Singapore Dollar (S$)" },
+  { v: "HKD", l: "HKD — Hong Kong Dollar (HK$)" },
+  { v: "MXN", l: "MXN — Mexican Peso (MX$)" },
+  { v: "BRL", l: "BRL — Brazilian Real (R$)" },
+  { v: "ZAR", l: "ZAR — South African Rand (R)" },
+  { v: "AED", l: "AED — UAE Dirham (د.إ)" },
+  { v: "SAR", l: "SAR — Saudi Riyal (﷼)" },
+  { v: "TRY", l: "TRY — Turkish Lira (₺)" },
+  { v: "SEK", l: "SEK — Swedish Krona (kr)" },
+  { v: "NOK", l: "NOK — Norwegian Krone (kr)" },
+  { v: "DKK", l: "DKK — Danish Krone (kr)" },
+  { v: "PLN", l: "PLN — Polish Złoty (zł)" },
+  { v: "THB", l: "THB — Thai Baht (฿)" },
+  { v: "IDR", l: "IDR — Indonesian Rupiah (Rp)" },
+  { v: "MYR", l: "MYR — Malaysian Ringgit (RM)" },
+  { v: "PHP", l: "PHP — Philippine Peso (₱)" },
+  { v: "PKR", l: "PKR — Pakistani Rupee (₨)" },
+  { v: "EGP", l: "EGP — Egyptian Pound (£)" },
+  { v: "NGN", l: "NGN — Nigerian Naira (₦)" },
+];
+
+function detectTimezone() {
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York"; }
+  catch(e) { return "America/New_York"; }
+}
+
 const TRAVELER_TYPES = [
   { v:"Solo", sub:"Just me" }, { v:"Couple", sub:"Two of us" },
   { v:"Family", sub:"With kids" }, { v:"Business", sub:"Work trip" },
@@ -916,7 +1008,7 @@ function Field({ label, required, hint, error, children, refEl }) {
 /* ============================================================
    Header / Footer
    ============================================================ */
-function Header({ theme, setTheme, accent, setAccent, onPlan }) {
+function Header({ theme, setTheme, accent, setAccent, onPlan, timezone, setTimezone, currency, setCurrency }) {
   return (
     <header className="header">
       <div className="container header-inner">
@@ -925,6 +1017,18 @@ function Header({ theme, setTheme, accent, setAccent, onPlan }) {
           Voyagora
         </div>
         <div className="header-actions">
+          <div className="header-select-wrap label-hide">
+            <span className="sel-label">🌐</span>
+            <select className="header-select" value={timezone} onChange={e => setTimezone(e.target.value)} title="Time zone">
+              {TIMEZONES.map(tz => <option key={tz.v} value={tz.v}>{tz.l}</option>)}
+            </select>
+          </div>
+          <div className="header-select-wrap label-hide">
+            <span className="sel-label">💱</span>
+            <select className="header-select" value={currency} onChange={e => setCurrency(e.target.value)} title="Currency">
+              {CURRENCIES.map(c => <option key={c.v} value={c.v}>{c.l}</option>)}
+            </select>
+          </div>
           <div className="accent-picker label-hide">
             {["indigo","teal","sky"].map(a => (
               <span key={a} title={a}
@@ -1435,6 +1539,8 @@ function Itinerary({ data, req, onNew }) {
 function App() {
   const [theme, setTheme] = useState("light");
   const [accent, setAccent] = useState("indigo");
+  const [timezone, setTimezone] = useState(detectTimezone);
+  const [currency, setCurrency] = useState("USD");
   const [view, setView] = useState("landing"); // landing | loading | itinerary
   const [itin, setItin] = useState(null);
   const [req, setReq] = useState(null);
@@ -1462,7 +1568,8 @@ function App() {
   return (
     <>
       {view !== "loading" &&
-        <Header theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent} onPlan={scrollToForm} />}
+        <Header theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent} onPlan={scrollToForm}
+          timezone={timezone} setTimezone={setTimezone} currency={currency} setCurrency={setCurrency} />}
 
       {view === "landing"   && <Landing onSubmit={handleSubmit} formRef={formRef} />}
       {view === "loading"   && <Loading />}
